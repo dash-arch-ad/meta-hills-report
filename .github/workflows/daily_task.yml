@@ -10,6 +10,9 @@ on:
     - cron: '03 0 * * *'    
   workflow_dispatch: # 手動実行ボタン
 
+permissions:
+  contents: write
+
 jobs:
   run-script:
     runs-on: ubuntu-latest
@@ -17,6 +20,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -33,3 +38,21 @@ jobs:
           APP_SECRET_JSON: ${{ secrets.APP_SECRET_JSON }}
         run: |
           python script.py
+
+      - name: Prevent 60-day workflow suspension
+        run: |
+          last_commit_time=$(git log -1 --format=%ct)
+          current_time=$(date +%s)
+          diff_days=$(( (current_time - last_commit_time) / 86400 ))
+          
+          echo "最終更新から ${diff_days} 日経過しています。"
+          
+          if [ "$diff_days" -ge 50 ]; then
+            echo "50日以上経過しているため、ワークフロー停止回避の空コミットを作成します。"
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "github-actions[bot]@users.noreply.github.com"
+            git commit --allow-empty -m "chore: keep alive to prevent workflow suspension"
+            git push
+          else
+            echo "空コミットは不要です。"
+          fi
