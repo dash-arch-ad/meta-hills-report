@@ -1,0 +1,35 @@
+name: Data Pipeline
+
+on:
+  schedule:
+# 1回目：日本時間 午前8:51 (UTC 前日23:51)
+    - cron: '51 23 * * *'
+# 2回目：日本時間 午前8:56 (UTC 前日23:56)
+    - cron: '56 23 * * *'
+# 3回目：日本時間 午前9:03 (UTC 当日00:03)
+    - cron: '03 0 * * *'    
+  workflow_dispatch: # 手動実行ボタン
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run script
+        env:
+          # ここでSecretsを環境変数として注入
+          APP_SECRET_JSON: ${{ secrets.APP_SECRET_JSON }}
+        run: |
+          python script.py
