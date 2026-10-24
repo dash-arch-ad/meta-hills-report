@@ -7,7 +7,7 @@ on:
 # 2回目：日本時間 午前8:56 (UTC 前日23:56)
     - cron: '56 23 * * *'
 # 3回目：日本時間 午前9:03 (UTC 当日00:03)
-    - cron: '03 0 * * *'    
+    - cron: '03 0 * * *'
   workflow_dispatch: # 手動実行ボタン
 
 permissions:
@@ -30,7 +30,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade -r requirements.txt
+          python -m pip check
+          python -m pip show requests gspread oauth2client certifi
 
       - name: Run script
         env:
@@ -44,9 +47,9 @@ jobs:
           last_commit_time=$(git log -1 --format=%ct)
           current_time=$(date +%s)
           diff_days=$(( (current_time - last_commit_time) / 86400 ))
-          
+
           echo "最終更新から ${diff_days} 日経過しています。"
-          
+
           if [ "$diff_days" -ge 50 ]; then
             echo "50日以上経過しているため、ワークフロー停止回避の空コミットを作成します。"
             git config --global user.name "github-actions[bot]"
